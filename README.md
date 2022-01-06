@@ -271,3 +271,50 @@ const addNote = (event) => {
 ```
 
 现在添加一个新功能：增加一个按钮能自由切换展示`note.important`为`true`或者全部`note`。
+
+```jsx
+const [showAll, setShowAll] = useState(true);
+
+const notesToShow = showAll ? notes : notes.filter((note) => note.important);
+
+<form>
+  <input value={newNote} onChange={handleOnChange} />
+  <button type={"submit"} onClick={addNote}>
+    save
+  </button>
+  <button type={"button"} onClick={setShowAll.bind(this, !showAll)}>
+    {showAll ? "show important" : "show all"}
+  </button>
+</form>;
+```
+
+`onClick={setShowAll.bind(this, !showAll)`也可以写成箭头函数：`onClick = {()=>setShowAll(!showAll)}`。
+
+## 服务端
+
+为了更好地模拟服务端数据，使用`json-server`进行数据监视。
+
+在`package.json`文件中配置：
+
+```json
+"scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "prepare": "husky install",
+    "json-server": "json-server -p 3001 --watch __json_server_mock__/db.json "
+},
+```
+
+安装`axios`包用于获取数据。
+
+删除`index.js`中的`notes`，我们将在`App`组件中直接获取数据：
+
+```jsx
+useEffect(() => {
+  axios.get("http://localhost:3001/notes").then((res) => {
+    setNotes([...res.data]);
+  });
+}, []);
+```
