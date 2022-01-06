@@ -1,70 +1,193 @@
-# Getting Started with Create React App
+# 教程
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 安装
 
-## Available Scripts
+使用`npx create-react-app note-project`进行项目安装，`note-project`是项目名。
 
-In the project directory, you can run:
+安装完成后的项目目录结构：
 
-### `npm start`
+![image-20220106101218588](https://raw.githubusercontent.com/bearbaba/imgs-repo/main/202201061012381.png)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 开始前的配置
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+开始前需要配置相关插件用于提交代码后格式化代码。
 
-### `npm test`
+### prettier
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+使用 prettier （[https://prettier.io/docs/en/install.html](https://prettier.io/docs/en/install.html)）格式化代码：
 
-### `npm run build`
+```shell
+npm install --save-dev --save-exact prettier
+echo {}> .prettierrc.json // 最好手动配置 .prettierrc.json 文件， windows下使用 echo 会存在格式问题
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+根目录下创建一个 .prettierignore 文件，文件写入：
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```reStructuredText
+# Ignore artifacts:
+build
+coverage
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+使用 Pre-commit Hook
+（[https://prettier.io/docs/en/precommit.html](https://prettier.io/docs/en/precommit.html)）在代码每次提交时自动进行格式化。
 
-### `npm run eject`
+```shell
+npx mrm lint-staged
+// 有可能会安装失败，因为 mrm 需要单独安装，可以使用 npm install mrm
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### ESlint
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+使用`eslint-config-prettier`避免 ESlint 与 Prettier 发生冲突：
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```shell
+npm install --save-dev eslint-config-prettier
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+再去`package`文件中修改`eslintConfig`配置，在`extends`这一条中添加`prettier`这一项：
 
-## Learn More
+```json
+"eslintConfig": {
+"extends": [
+"react-app",
+"react-app/jest",
+"prettier"
+]
+}
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+同时还要添加：
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```json
+"husky": {
+"hooks": {
+"pre-commit": "lint-staged"
+}
+},
+"lint-staged": {
+"*.{js,css,md,ts,tsx}": "prettier --write"
+}
+```
 
-### Code Splitting
+### commitlint
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+全局安装：**npm install -g commitizen**；
 
-### Analyzing the Bundle Size
+项目安装： **npm install cz-conventional-changelog**；
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+在 package.json 中进行配置：
 
-### Making a Progressive Web App
+```json
+"config": {
+"commitizen": {
+"path": "node_modules/cz-conventional-changelog"
+}
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+执行 **git add . ** ，再执行 **git cz **，出现提示如下，则说明配置成功:
 
-### Advanced Configuration
+![db882df6c49440b0b391e6c08507e540_tplv-k3u1fbpfcp-watermark](https://raw.githubusercontent.com/bearbaba/imgs-repo/main/202112121438768.webp)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+校验 commit 格式：
 
-### Deployment
+```shell
+npm i -D @commitlint/config-conventional @commitlint/cli
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+根目录下创建 commitlint.config.js 文件，写入配置：
 
-### `npm run build` fails to minify
+```js
+module.exports = {
+  extends: ["@commitlint/config-conventional"],
+  rules: {},
+};
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+查看 husky 的版本；
+
+- **如果版本 < 5.0.0 **，在 package.json 中配置：
+
+```json
+"husky": {
+"hooks": {
+"pre-commit": "lint-staged",
+"commit-msg": "commitlint -e $GIT_PARAMS"
+}
+},
+```
+
+注：`"pre-commit"`在之前已经配置过，新增的是`"commit-msg"`这一条。
+
+- **若 husky 版本 >=5.0.0：**
+
+执行 **npx husky install** 安装 git 钩子
+
+执行 **npx husky add .husky/commit-msg 'npx commitlint --edit $1'** 启用适配 commitlint 的 commit-msg hook
+
+如果 **git commit** 不符合`commitlint`规范（https://github.com/conventional-changelog/commitlint），那么提交就会失败。
+
+## 数据渲染
+
+一开始在`index.js`中添加便笺内容：
+
+```jsx
+import ReactDOM from "react-dom";
+import App from "./App";
+
+const notes = [
+  {
+    id: 1,
+    content: "HTML is easy",
+    date: "2019-05-30T17:30:31.098Z",
+    important: true,
+  },
+  {
+    id: 2,
+    content: "Browser can execute only JavaScript",
+    date: "2019-05-30T18:39:34.091Z",
+    important: false,
+  },
+  {
+    id: 3,
+    content: "GET and POST are the most important methods of HTTP protocol",
+    date: "2019-05-30T19:20:14.298Z",
+    important: true,
+  },
+];
+
+ReactDOM.render(<App notes={notes} />, document.getElementById("root"));
+```
+
+使用`props`将父组件内容传递给`App`组件。
+
+```jsx
+import "./App.css";
+
+function App({ notes }) {
+  return (
+    <div className="App">
+      <ul>
+        {notes.map((note) => (
+          <li>{note.content}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
+```
+
+我们采取 React 的建议为每一项添加独一无二的`key`值。
+
+```jsx
+{
+  notes.map((note) => <li key={note.id}>{note.content}</li>);
+}
+```
+
+但是并不推荐使用`map`的`index`作为`key`值。
+
+我们可以将
