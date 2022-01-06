@@ -205,3 +205,69 @@ export const Note = ({ content }) => {
   notes.map((note) => <Note content={note.content} key={note.id} />);
 }
 ```
+
+## 表单
+
+现在增加表单，让页面拥有获得添加新的便笺内容的功能。
+
+从表现上看，添加输入框与添加按钮。
+
+```jsx
+import "./App.css";
+import { Note } from "./components/note";
+import { useState } from "react";
+
+function App(props) {
+  const [notes, setNotes] = useState([...props.notes]);
+  const [newNote, setNewNote] = useState("new Note");
+
+  const addNote = (event) => {
+    event.preventDefault();
+    console.log(newNote);
+  };
+
+  const handleOnChange = (event) => {
+    setNewNote(event.target.value);
+  };
+
+  return (
+    <div className="App">
+      <h1>Note</h1>
+      <ul>
+        {notes.map((note) => (
+          <Note content={note.content} key={note.id} />
+        ))}
+      </ul>
+      <form>
+        <input value={newNote} onChange={handleOnChange} />
+        <button type={"submit"} onClick={addNote}>
+          save
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export default App;
+```
+
+`event`为 React 提供的合成事件，`event.target.value`能够获取输入框内容。
+
+我们现在更新`addNote`函数，让它具有生成新的`note`功能。
+
+```jsx
+const addNote = (event) => {
+  event.preventDefault();
+  const noteObject = {
+    content: newNote,
+    date: new Date().toISOString(),
+    important: Math.random() < 0.5,
+    id: notes.length + 1,
+  };
+
+  setNotes([...notes, noteObject]);
+  setNewNote("");
+};
+```
+
+现在添加一个新功能：增加一个按钮能自由切换展示`note.important`为`true`或者全部`note`。
