@@ -190,4 +190,18 @@ export default App;
 
 但是并不推荐使用`map`的`index`作为`key`值。
 
-我们可以将
+我们可以将`map`渲染的每一项抽离出来作为`Note`组件，组件存放在`components`目录下：
+
+```jsx
+export const Note = ({ content }) => {
+  return <li>{content}</li>;
+};
+```
+
+`index.js`中的内容更新为：
+
+```jsx
+{
+  notes.map((note) => <Note content={note.content} key={note.id} />);
+}
+```
