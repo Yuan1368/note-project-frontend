@@ -2,11 +2,13 @@ import "./App.css";
 import { Note } from "./components/note";
 import { useEffect, useState } from "react";
 import { http } from "./utils/http";
+import { Notification } from "./components/notification";
 
 function App() {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState("new Note");
   const [showAll, setShowAll] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("some errors happened...");
 
   useEffect(() => {
     http.getAllNotes().then((res) => setNotes(res));
@@ -48,12 +50,26 @@ function App() {
             note.id === changedNote.id ? changedNote : note
           ),
         ]);
+      })
+      .catch((error) => {
+        setErrorMessage(`${error} error removed...`);
+        setTimeout(() => {
+          setErrorMessage(null);
+        }, 1000);
+        setNotes(notes.filter((note) => note.id !== id));
       });
   };
 
   return (
-    <div className="App">
-      <h1>Note</h1>
+    <div className="app">
+      <h1 className={"app__title"}>Note</h1>
+      <Notification message={errorMessage} />
+      <form>
+        <input value={newNote} onChange={handleOnChange} />
+        <button type={"submit"} onClick={addNote}>
+          save
+        </button>
+      </form>
       <ul>
         {notesToShow.map((note) => (
           <Note
@@ -63,15 +79,9 @@ function App() {
           />
         ))}
       </ul>
-      <form>
-        <input value={newNote} onChange={handleOnChange} />
-        <button type={"submit"} onClick={addNote}>
-          save
-        </button>
-        <button type={"button"} onClick={setShowAll.bind(this, !showAll)}>
-          {showAll ? "show important" : "show all"}
-        </button>
-      </form>
+      <button type={"button"} onClick={setShowAll.bind(this, !showAll)}>
+        {showAll ? "show important" : "show all"}
+      </button>
     </div>
   );
 }

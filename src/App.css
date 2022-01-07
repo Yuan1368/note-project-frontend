@@ -1,0 +1,10 @@
+.app__title {
+}
+
+.app .error {
+  color: red;
+  font-size: 20px;
+  background: #e1dfdf;
+  text-align: center;
+  padding: 5px;
+}
