@@ -1,7 +1,7 @@
 import "./App.css";
 import { Note } from "./components/note";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { http } from "./utils/http";
 
 function App() {
   const [notes, setNotes] = useState([]);
@@ -9,9 +9,7 @@ function App() {
   const [showAll, setShowAll] = useState(true);
 
   useEffect(() => {
-    axios.get("http://localhost:3001/notes").then((res) => {
-      setNotes([...res.data]);
-    });
+    http.getAllNotes().then((res) => setNotes(res));
   }, []);
 
   const notesToShow = showAll ? notes : notes.filter((note) => note.important);
@@ -24,8 +22,9 @@ function App() {
       important: Math.random() < 0.5,
       id: notes.length + 1,
     };
-    axios.post("http://localhost:3001/notes", noteObject).then((res) => {
-      setNotes([...notes, res.data]);
+
+    http.postNotes(noteObject).then((res) => {
+      setNotes([...notes, res]);
       setNewNote("");
     });
   };
@@ -36,13 +35,14 @@ function App() {
 
   const taggleNoteImportant = (id) => {
     let _note = notes.find((note) => note.id === id);
-    axios
-      .put(`http://localhost:3001/notes/${id}`, {
+
+    http
+      .updateNote(id, {
         ..._note,
         important: !_note.important,
       })
       .then((res) => {
-        let changedNote = res.data;
+        let changedNote = res;
         setNotes([
           ...notes.map((note) =>
             note.id === changedNote.id ? changedNote : note

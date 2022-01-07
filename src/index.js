@@ -4,7 +4,6 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
-let notes = [];
 ReactDOM.render(
   <React.StrictMode>
     <App notes />
