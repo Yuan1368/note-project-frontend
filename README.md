@@ -298,16 +298,18 @@ const notesToShow = showAll ? notes : notes.filter((note) => note.important);
 
 ```json
 "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "prepare": "husky install",
-    "json-server": "json-server -p 3001 --watch __json_server_mock__/db.json "
+"start": "react-scripts start",
+"build": "react-scripts build",
+"test": "react-scripts test",
+"eject": "react-scripts eject",
+"prepare": "husky install",
+"json-server": "json-server -p 3001 --watch __json_server_mock__/db.json "
 },
 ```
 
 安装`axios`包用于获取数据。
+
+有了`axios`后，可以使用`axios.get()`方法获取到所有的数据。
 
 删除`index.js`中的`notes`，我们将在`App`组件中直接获取数据：
 
@@ -318,3 +320,23 @@ useEffect(() => {
   });
 }, []);
 ```
+
+同时可以使用`axios.post()`方法增添新便笺：
+
+```jsx
+const addNote = (event) => {
+  event.preventDefault();
+  const noteObject = {
+    content: newNote,
+    date: new Date().toISOString(),
+    important: Math.random() < 0.5,
+    id: notes.length + 1,
+  };
+  axios.post("http://localhost:3001/notes", noteObject).then((res) => {
+    setNotes([...notes, res.data]);
+    setNewNote("");
+  });
+};
+```
+
+增加一个新的功能：允许切换组件的`important`值。

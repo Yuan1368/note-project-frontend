@@ -24,13 +24,26 @@ function App() {
       important: Math.random() < 0.5,
       id: notes.length + 1,
     };
-
-    setNotes([...notes, noteObject]);
-    setNewNote("");
+    axios.post("http://localhost:3001/notes", noteObject).then((res) => {
+      setNotes([...notes, res.data]);
+      setNewNote("");
+    });
   };
 
   const handleOnChange = (event) => {
     setNewNote(event.target.value);
+  };
+
+  const taggleNoteImportant = (id) => {
+    setNotes([
+      ...notes.map((note) => {
+        let _note = note;
+        if (id === note.id) {
+          _note.important = !note.important;
+        }
+        return _note;
+      }),
+    ]);
   };
 
   return (
@@ -38,7 +51,11 @@ function App() {
       <h1>Note</h1>
       <ul>
         {notesToShow.map((note) => (
-          <Note content={note.content} key={note.id} />
+          <Note
+            content={note.content}
+            onClick={() => taggleNoteImportant(note.id)}
+            key={note.id}
+          />
         ))}
       </ul>
       <form>
