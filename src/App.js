@@ -35,15 +35,20 @@ function App() {
   };
 
   const taggleNoteImportant = (id) => {
-    setNotes([
-      ...notes.map((note) => {
-        let _note = note;
-        if (id === note.id) {
-          _note.important = !note.important;
-        }
-        return _note;
-      }),
-    ]);
+    let _note = notes.find((note) => note.id === id);
+    axios
+      .put(`http://localhost:3001/notes/${id}`, {
+        ..._note,
+        important: !_note.important,
+      })
+      .then((res) => {
+        let changedNote = res.data;
+        setNotes([
+          ...notes.map((note) =>
+            note.id === changedNote.id ? changedNote : note
+          ),
+        ]);
+      });
   };
 
   return (
