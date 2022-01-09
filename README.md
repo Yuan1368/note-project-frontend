@@ -47,13 +47,13 @@ npm install --save-dev eslint-config-prettier
 
 再去`package`文件中修改`eslintConfig`配置，在`extends`这一条中添加`prettier`这一项：
 
-```json
+```text
 "eslintConfig": {
-"extends": [
-"react-app",
-"react-app/jest",
-"prettier"
-]
+  "extends": [
+        "react-app",
+        "react-app/jest",
+        "prettier"
+    ]
 }
 ```
 
@@ -78,11 +78,11 @@ npm install --save-dev eslint-config-prettier
 
 在 package.json 中进行配置：
 
-```json
+```text
 "config": {
-"commitizen": {
-"path": "node_modules/cz-conventional-changelog"
-}
+  "commitizen": {
+  "path": "node_modules/cz-conventional-changelog"
+  }
 }
 ```
 
@@ -340,3 +340,257 @@ const addNote = (event) => {
 ```
 
 增加一个新的功能：允许切换组件的`important`值。
+
+```jsx
+<Note
+  content={note.content}
+  onClick={() => taggleNoteImportant(note.id)}
+  key={note.id}
+/>
+```
+
+我们需要使用到`axios.put()`方法用于替换`notes`中的某一项：
+
+```jsx
+const taggleNoteImportant = (id) => {
+  let _note = notes.find((note) => note.id === id);
+  axios
+    .put(`http://localhost:3001/notes/${id}`, {
+      ..._note,
+      important: !_note.important,
+    })
+    .then((res) => {
+      let changedNote = res.data;
+      setNotes([
+        ...notes.map((note) =>
+          note.id === changedNote.id ? changedNote : note
+        ),
+      ]);
+    });
+};
+```
+
+url 中的`/notes/${id}`用于表示`notes`中`id`值为`${id}`的一项。
+
+## 封装网络请求
+
+为了让整个目录更加清晰，将相关的网络请求方法封装进工具文件中。
+
+首先新建`.env`文件，该文件写入服务端地址，
+
+```text
+REACT_APP_API_URL = http://localhost:3001
+```
+
+再新建`utils`工具文件夹。该文件下新建`http.js`用于封装对后端的请求方法：
+
+```js
+import axios from "axios";
+
+const baseUrl = process.env.REACT_APP_URL_API;
+const notesApi = baseUrl + "/notes";
+
+const getAllNotes = () => {
+  return axios.get(notesApi).then((res) => res.data);
+};
+
+const postNotes = (note) => {
+  return axios.post(notesApi, note).then((res) => res.data);
+};
+
+const updateNote = (id, note) => {
+  return axios.put(`${notesApi}/${id}`, note).then((res) => res.data);
+};
+
+export const http = {
+  getAllNotes,
+  postNotes,
+  updateNote,
+};
+```
+
+导出的`http`对象中包含了`getAllNotes`、`postNotes`、`updateNote`三个方法。现在能够在`App`组件中使用`http`对象方法：
+
+```jsx
+useEffect(() => {
+  http.getAllNotes().then((res) => setNotes(res));
+}, []);
+
+const addNote = (event) => {
+  event.preventDefault();
+  const noteObject = {
+    content: newNote,
+    date: new Date().toISOString(),
+    important: Math.random() < 0.5,
+    id: notes.length + 1,
+  };
+
+  http.postNotes(noteObject).then((res) => {
+    setNotes([...notes, res]);
+    setNewNote("");
+  });
+};
+
+const taggleNoteImportant = (id) => {
+  let _note = notes.find((note) => note.id === id);
+
+  http
+    .updateNote(id, {
+      ..._note,
+      important: !_note.important,
+    })
+    .then((res) => {
+      let changedNote = res;
+      setNotes([
+        ...notes.map((note) =>
+          note.id === changedNote.id ? changedNote : note
+        ),
+      ]);
+    });
+};
+```
+
+## 添加样式
+
+`App`中新建一个`notification`组件，该组件用于模拟显示新建便笺发生错误的通知，并使用`className`引入样式：
+
+```jsx
+// App.js
+<Notification message={errorMessage} />
+```
+
+```jsx
+// utils/components
+export const Notification = ({ message }) => {
+  if (message === null) {
+    return;
+  } else {
+    return <div className={"error"}>{message}</div>;
+  }
+};
+```
+
+```css
+// App.css
+.app .error {
+  color: red;
+  font-size: 20px;
+  background: #e1dfdf;
+  text-align: center;
+  padding: 5px;
+}
+```
+
+![image-20220107162303884](https://raw.githubusercontent.com/bearbaba/imgs-repo/main/202201071623267.png)
+
+## 使用 Express 模拟真实环境
+
+为了让我们前后端能有更多的交互，现在根目录下新建一个`Express`的后端项目。
+
+先对项目进行初始化：
+
+```shell
+npm init
+```
+
+然后安装`express`:
+
+```shell
+npm install express
+```
+
+由于使用`node`在代码更改后无法热更新，所以我们安装`nodemon`:
+
+```shell
+npm install nodemon
+```
+
+在根目录下新建`index.js`,文件内容为：
+
+```js
+const express = require("express");
+const { response, request } = require("express");
+const app = express();
+
+const notes = {
+  notes: [
+    {
+      id: 1,
+      content: "HTML is easy",
+      date: "2019-05-30T17:30:31.098Z",
+      important: true,
+    },
+    {
+      id: 2,
+      content: "Browser can execute only JavaScript",
+      date: "2019-05-30T18:39:34.091Z",
+      important: true,
+    },
+    {
+      id: 3,
+      content: "GET and POST are the most important methods of HTTP protocol",
+      date: "2019-05-30T19:20:14.298Z",
+      important: false,
+    },
+    {
+      content: "new Note",
+      date: "2022-01-07T08:13:20.132Z",
+      important: false,
+      id: 4,
+    },
+  ],
+};
+
+// 如果发送 get 请求，且 url 为 "/"，则响应发送"<h1>Hello world</h1>"
+app.get("/", (req, res) => {
+  res.send("<h1>Hello world</h1>");
+});
+
+// 如果发送 get 请求，且 url 为 "/notes"，则响应发送 notes
+app.get("/notes", (req, res) => {
+  res.json(notes);
+});
+
+// 表示监听 3001 端口，并在控制台上答应内容
+app.listen(3001, () => {
+  console.log("this is running...");
+});
+```
+
+使用`nodemon index.js`来运行程序。
+
+`express`中的`res.json()`会自动处理将 js 中的数据格式转换为`json`格式，所以响应发送`notes`并不需要 JSON 格式化处理。
+
+现在我们希望得到单个便笺的内容，这里我们利用 RESTful 标准：
+
+```js
+app.get("/api/notes/:id", (req, res) => {
+  const note = notes.find((note) => note.id === req.params.id);
+  res.json(note);
+});
+```
+
+这里的含义是：当我们发送`get`请求，且请求内容是类似`/api/notes/4`形式时，`request`的`params`将含有`id`值为 4 的属性。
+
+但是上述是存在一个问题的，`params`的值是字符串类型，而在`notes`中`id`值类型为数字，所以我们需要把`params.id`值转换成`number`类型。
+
+现在我们新增一个请求，删除指定`id`的便笺，这里就需要我们对`delete`做出响应：
+
+```js
+app.delete("/api/notes/:id", (req, res) => {
+  notes = notes.filter((note) => note.id !== Number(req.params.id));
+  res.status(202).end();
+});
+```
+
+但是这里依然存在一个 bug，如果删除了不存在的便笺，返回的响应码依然是 202,并没有处理 404 的情况。
+
+## express 处理 post 请求
+
+`express`在上述中对`get`，`delete`都是对`request`的`params`数据的读取，`post`请求则是将数据发送给服务器，需要读取的是`request.body`。
+
+由于发送请求的数据格式是 JSON ，我们需要使用`express`中的`json-parser`中间件，将`body`的数据格式转换成 js 数据格式。
+
+```js
+
+```
