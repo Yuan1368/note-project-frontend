@@ -471,7 +471,7 @@ export const Notification = ({ message }) => {
 ```
 
 ```css
-// App.css
+/*App.css*/
 .app .error {
   color: red;
   font-size: 20px;
@@ -592,5 +592,7 @@ app.delete("/api/notes/:id", (req, res) => {
 由于发送请求的数据格式是 JSON ，我们需要使用`express`中的`json-parser`中间件，将`body`的数据格式转换成 js 数据格式。
 
 ```js
-
+app.use(express.json());
 ```
+
+这个时候我们就能够通过读取`req.body`的数据来实现 post 的过程：更新 notes，然后将新增的 note 作为响应信息发送出去。
