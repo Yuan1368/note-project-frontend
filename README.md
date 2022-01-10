@@ -624,3 +624,105 @@ const unknownEndPoint = (req, res) => {
 
 app.use(unknownEndPoint);
 ```
+
+## 处理跨域
+
+由于跨域问题的存在，我们的前端可能无法访问到后端内容，因而我们在后端上安装`cors`包，来处理前端请求跨域：
+
+```js
+const cors = require("cors");
+app.use(cors());
+```
+
+## 部署到 heroku
+
+我们可以把应用迁移到互联网上，我将使用 heroku 来进行部署，使用前需要下载 heroku 的脚手架，另外还需要一个 heroku 的账号。
+
+然后首先需要在 github 上创建一个仓库用来存放后端代码，当我们的后端代码已经存放到了 github 仓库内我将进行下一步操作，
+
+在后端项目中创建一个 Procfile 文件，文件内写入：
+
+```text
+web: npm start
+```
+
+事实上文件内容与`package.json`中启动项目的配置是一致的。
+
+更改`index.js`关于端口的配置：
+
+```js
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+然后我们执行`heroku create`命令创建一个 heroku 应用，
+
+可能在执行这个命令前我们还需要使用`heroku login -i`以及 heroku 的账户来登录 heroku 应用。
+
+再把项目部署到 heroku 上：
+
+```git
+git push heroku main
+```
+
+在这个命令执行后控制台会出现一个远程的 url ，如果没有可以使用`heroku logs`命令查看问题。
+
+## 前端部署到 heroku
+
+有了 heroku 后，我们可以使用`npm run build`来打包我们的前端项目，
+
+不过我们可以先尝试着把 env 中关于`REACT_APP_URL_API`改成 heroku 生成的 url，然后再执行`build`命令。
+
+build 后会生成一个`build`文件夹，将这个文件夹放进后端项目中，
+
+然后在`index.js`文件中增加处理`build`后的文件的中间件：
+
+```js
+app.use(express.static("build"));
+```
+
+此时需要把更新后的文件`push`到`heroku`上。 然后再去访问`heroku`生成的 url ，得到将是构建的前端页面。
+
+也可以把前端中的地址更改成相对地址，因为此时前端生成的内容与后端是相当于放在同一服务器上的（即 heroku）。
+
+```text
+REACT_APP_URL_API = /api
+```
+
+尽管我们的`api`实际上应当是`/api/notes`，但是我们之前有写过`const notesApi = baseUrl + "/notes"`，所以还是尽量区分开全部`api`与`api`下的`notes`接口为好。
+
+我们现在每一次更新前端都需要 build 后部署到 heroku 上毕竟过于繁琐，但是我们如果不 build 而是像之前那样执行 serve ，现在又因为使用的是相对地址，获取不到实际后端的 api ，所以可以在`package.json`中配置 proxy：
+
+```text
+"proxy": "https://shielded-sierra-99726.herokuapp.com/"
+```
+
+代理的地址是 heroku 生成的 url 。
+
+另外我们可以在后端项目中的`package.json`添加以下脚本，简化手动打包的复杂过程：
+
+```text
+{
+  "scripts": {
+     //...
+    "build:ui": "rm -rf build && cd ../part2-notes/ && npm run build && cp -r build ../notes-backend",
+    "deploy": "git push heroku main",
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push && npm run deploy",
+    "logs:prod": "heroku logs --tail"
+  }
+}
+```
+
+以上命令中出现的路径应该根据实际情况进行修改。
+
+- `build:ui`命令是删除`build`文件后，在切到前端项目中执行 build 命令后，把`build`文件夹粘贴进后端库内；
+
+- `deploy`命令则是进行 heroku 的部署；
+
+- `deploy:ui`命令会将这两者结合起来，并包含更新后端存储库所需的 git 命令；
+
+- `npm run logs:prod`用于显示 heroku 日志。
+
+有了如上脚本能够快速进行 heroku 的部署活动。

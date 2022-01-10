@@ -60,5 +60,6 @@
     "commitizen": {
       "path": "node_modules/cz-conventional-changelog"
     }
-  }
+  },
+  "proxy": "https://shielded-sierra-99726.herokuapp.com/"
 }
