@@ -596,3 +596,31 @@ app.use(express.json());
 ```
 
 这个时候我们就能够通过读取`req.body`的数据来实现 post 的过程：更新 notes，然后将新增的 note 作为响应信息发送出去。
+
+这里的`app.use`使用了中间件函数`express.json()`，
+
+事实上，我们可以自己定义一个我们想要的中间件函数，例如这里我们添加一个新的功能，在每次发送请求时，打印除请求的一些信息：
+
+```js
+// 定义一个中间件处理 打印请求日志
+const requestLogger = (req, res, next) => {
+  console.log("path:", req.path);
+  console.log("method", req.method);
+  console.log("body", req.body);
+  next();
+};
+
+app.use(requestLogger);
+```
+
+由于这个中间件是在处理之前进行的，所以我们要把它的位置放在处理路由之前，还有一些中间件是放在处理路由之后，
+
+例如，当我们没有找到匹配的路由时，我们就执行返回`status`为 404 的中间件：
+
+```js
+const unknownEndPoint = (req, res) => {
+  res.status(404).send({ content: "error" }).end();
+};
+
+app.use(unknownEndPoint);
+```
