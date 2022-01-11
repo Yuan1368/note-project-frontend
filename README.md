@@ -726,3 +726,81 @@ REACT_APP_URL_API = /api
 - `npm run logs:prod`用于显示 heroku 日志。
 
 有了如上脚本能够快速进行 heroku 的部署活动。
+
+## 数据库配置
+
+我们可以安装`mongodb`作为后端的数据库，这里我们使用的是 mongo 提供的免费在线数据库。
+
+在后端项目中安装`mongoose`用于连接数据库，
+
+```js
+const mongoose = require("mongoose");
+
+const url = `mongodb+srv://lance:${password}@cluster0.51uag.mongodb.net/test?retryWrites=true&w=majority`;
+mongoose.connect(url);
+```
+
+这里的 url 用于连接 mongo 的在线数据库， url 中的`/test`意为数据库名为`test`，也可以使用其它的数据库名代替；
+
+url 中的`password`我们将通过如下方式获取：
+
+```js
+if (process.argv.length < 3) {
+  console.log("请提供密码");
+  process.exit(1);
+}
+
+const password = process.argv[2];
+```
+
+当我们使用`node index.js`命令启动项目时，必须要再提供一个参数作为数据库的密码，如果不提供将会退出启动项目。
+
+在数据库连接之后，我们为一个`note`定义`schema`：
+
+```js
+const noteSchema = new mongoose.Schema({
+  content: String,
+  important: Boolean,
+  date: Date,
+});
+```
+
+有了`noteSchema`之后我们就可以生成`note`的模型了：
+
+```js
+const Note = mongoose.model("Note", noteSchema);
+```
+
+如上代码告诉`mongoose`如何将`note`存储到数据库中，并且 mongodb 会创建一个小写`Note`的复数形式`notes`的集合用于存放`note`。
+
+然后我们我们可以尝试生成一个`note`并存放到数据库内：
+
+```js
+const note = new Note({
+  content: "HTML is Easy",
+  date: new Date(),
+  important: false,
+});
+
+note.save().then((res) => {
+  console.log("note saved");
+  mongoose.connection.close();
+});
+```
+
+并且我们还可以通过`find`方法来获取所有`notes`：
+
+```js
+note.find({}).then((res) => {
+  console.log(res);
+  mongoose.connection.close();
+});
+```
+
+`find`也可以用于查找符合某一条件的`notes`：
+
+```js
+note.find({ important: true }).then((res) => {
+  console.log(res);
+});
+```
