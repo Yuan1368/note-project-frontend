@@ -804,3 +804,140 @@ note.find({ important: true }).then((res) => {
   console.log(res);
 });
 ```
+
+现在我们尝试将数据库内容与后端内容结合，不过我们首先将数据库内容从`index.js`中拆分出来，创建`models`文件夹，然后新建`note.js`文件：
+
+```js
+const mongoose = require("mongoose");
+mongoose
+  .connect(url)
+  .then((res) => {
+    console.log("connected ok");
+  })
+  .catch((error) => {
+    console.log("error", error.message);
+  });
+
+const noteSchema = new mongoose.Schema({
+  content: String,
+  important: Boolean,
+  date: Date,
+});
+
+noteSchema.set("toJSON", {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id;
+    delete returnedObject._id;
+    delete returnedObject.__v;
+  },
+});
+
+module.exports = mongoose.model("Note", noteSchema);
+```
+
+我们这里使用`module.exports`导出`Note`模型，在需要导入时使用对应的`require()`。
+
+现在考虑一个问题，在真实服务器环境中，不可能会在每次运行项目时都带上密码参数，那么我们可以效仿前端，把 url 包括密码存放在`.env`文件内，不过我们需要使用`dotenv`来进行配置。
+
+`dotenv`需要安装：
+
+```text
+npm install dotenv
+```
+
+在`index.js`文件内配置：
+
+```js
+require("dotenv").config();
+```
+
+现在可以考虑把对路由的处理结合 mongodb 数据库了，
+
+首先是对所有数据的获取：
+
+```js
+const Note = require("./models/note");
+
+app.get("/api/notes", (req, res) => {
+  Note.find({}).then((result) => {
+    res.json(result);
+  });
+});
+```
+
+对`post`的请求处理：
+
+```js
+app.post("/api/notes", (req, res) => {
+  if (!req.body.content) {
+    res.status(400).json({ content: "error" }).end();
+  } else {
+    const note = new Note({
+      content: req.body.content,
+      important: req.body.important || false,
+      date: new Date(),
+    });
+
+    note.save().then((savedNote) => {
+      res.json(savedNote);
+    });
+  }
+});
+```
+
+然后是获取其中的某一条 Note ，也就是对 /api/notes/:id 的处理：
+
+```js
+app.get("/api/notes/:id",(req,res)=> {
+	Note.findById(req.params.id).then(note => {
+		res.json(note);
+	})
+}
+```
+
+这里我们使用了`findById`方法根据请求的`params`的`id`值来进行查找。
+
+我们还需要考虑请求的 Note 的`id`值不存在的情况，这种情况有两种，一是需要查找的 Note 在数据库中不存在的情况，二是查找的`params`是胡乱写的情况：
+
+```js
+app.get("/api/notes/:id", (req, res) => {
+  Note.findById(req.params.id)
+    .then((note) => {
+      if (note) res.json(note);
+      else {
+        res.status(404).end();
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).send({ error: "malformatted id" });
+    });
+});
+```
+
+如果查找的 Note 不存在，以 404 作为返回值，但是如果是一个错误的`params`则是请求上的错误，将会去执行`catch`。
+
+还应当考虑把错误的相关处理移动到中间件中,
+
+我们这里首先应当在对 api/notes/:id 路由处理中添加`next`函数，当
+
+```js
+app.get("/api/notes/:id", (req, res, next) => {
+  Note.findById(req.params.id)
+    .then((note) => {
+      if (note) res.json(note);
+      else {
+        res.status(404).end();
+      }
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+```
+
+## 中间件执行顺序
+
+在 Express 中代码的执行顺序并不是会是像预想的那样顺序执行，对路由的处理程序中实际上包含了执行条件，比如说对 /api/notes 的 GET 请求路由处理程序，并不会触发对 /api/notes 的 POST 请求处理程序。
+
+那么中间件实际上也拥有执行条件，当条件不满足的时候是不会触发的，比如说之前的`app.use(unknownEndPoint)`是在浏览器请求的路由都没有匹配到程序中的路由时，才会被执行。
