@@ -60,6 +60,12 @@ function App() {
       });
   };
 
+  const removeNote = (id) => {
+    http.deleteNote(id).then((res) => {
+      setNotes([...notes.filter((note) => note.id !== id)]);
+    });
+  };
+
   return (
     <div className="app">
       <h1 className={"app__title"}>Note</h1>
@@ -74,7 +80,8 @@ function App() {
         {notesToShow.map((note) => (
           <Note
             content={note.content}
-            onClick={() => taggleNoteImportant(note.id)}
+            onUpdateClick={() => taggleNoteImportant(note.id)}
+            onDeleteClick={() => removeNote(note.id)}
             key={note.id}
           />
         ))}

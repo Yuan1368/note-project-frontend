@@ -1,9 +1,10 @@
-export const Note = ({ content, onClick }) => {
+export const Note = ({ content, onUpdateClick, onDeleteClick }) => {
   return (
     <div>
       <li>
         {content}
-        <button onClick={onClick}>chang important</button>
+        <button onClick={onUpdateClick}>chang important</button>
+        <button onClick={onDeleteClick}>delete note</button>
       </li>
     </div>
   );

@@ -15,8 +15,13 @@ const updateNote = (id, note) => {
   return axios.put(`${notesApi}/${id}`, note).then((res) => res.data);
 };
 
+const deleteNote = (id) => {
+  return axios.delete(`${notesApi}/${id}`).then((res) => res.data);
+};
+
 export const http = {
   getAllNotes,
   postNotes,
   updateNote,
+  deleteNote,
 };
