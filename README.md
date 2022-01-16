@@ -693,7 +693,8 @@ REACT_APP_URL_API = /api
 
 尽管我们的`api`实际上应当是`/api/notes`，但是我们之前有写过`const notesApi = baseUrl + "/notes"`，所以还是尽量区分开全部`api`与`api`下的`notes`接口为好。
 
-我们现在每一次更新前端都需要 build 后部署到 heroku 上毕竟过于繁琐，但是我们如果不 build 而是像之前那样执行 serve ，现在又因为使用的是相对地址，获取不到实际后端的 api ，所以可以在`package.json`中配置 proxy：
+我们现在每一次更新前端都需要 build 后部署到 heroku 上毕竟过于繁琐，但是我们如果不 build 而是像之前那样执行 serve ，现在又因为使用的是相对地址，获取不到实际后端的 api ，所以可以在`package.json`
+中配置 proxy：
 
 ```text
 "proxy": "https://shielded-sierra-99726.herokuapp.com/"
@@ -805,9 +806,15 @@ note.find({ important: true }).then((res) => {
 });
 ```
 
-现在我们尝试将数据库内容与后端内容结合，不过我们首先将数据库内容从`index.js`中拆分出来，创建`models`文件夹，然后新建`note.js`文件：
+现在我们尝试将数据库内容与后端内容结合，不过我们首先将数据库内容从`index.js`中拆分出来，
+
+我们目前为止只处理了 Note ，但是在一个真实项目中，可能还会涉及到其它内容，所以我们应当尽量把对数据库模型的内容拆分到另一个文件中
+
+创建`models`文件夹，然后新建`note.js`文件：
 
 ```js
+// models/note.js
+
 const mongoose = require("mongoose");
 mongoose
   .connect(url)
@@ -839,7 +846,7 @@ module.exports = mongoose.model("Note", noteSchema);
 
 现在考虑一个问题，在真实服务器环境中，不可能会在每次运行项目时都带上密码参数，那么我们可以效仿前端，把 url 包括密码存放在`.env`文件内，不过我们需要使用`dotenv`来进行配置。
 
-`dotenv`需要安装：
+这里需要安装`dotenv`来进行配置：
 
 ```text
 npm install dotenv
@@ -888,7 +895,7 @@ app.post("/api/notes", (req, res) => {
 然后是获取其中的某一条 Note ，也就是对 /api/notes/:id 的处理：
 
 ```js
-app.get("/api/notes/:id",(req,res)=> {
+app.get("/api/notes/:id", (req, res) => {
 	Note.findById(req.params.id).then(note => {
 		res.json(note);
 	})
@@ -940,4 +947,79 @@ app.get("/api/notes/:id", (req, res, next) => {
 
 在 Express 中代码的执行顺序并不是会是像预想的那样顺序执行，对路由的处理程序中实际上包含了执行条件，比如说对 /api/notes 的 GET 请求路由处理程序，并不会触发对 /api/notes 的 POST 请求处理程序。
 
-那么中间件实际上也拥有执行条件，当条件不满足的时候是不会触发的，比如说之前的`app.use(unknownEndPoint)`是在浏览器请求的路由都没有匹配到程序中的路由时，才会被执行。
+也就是说，路由处理的程序执行是由浏览器向后端所发送的请求所决定的，每个路由处理程序之间是相互独立的。
+
+原因在于`app.get()`或者`app.listen()`等等这样的`express()`实现的函数中的第二参数是一个中间件函数，
+
+像是`app.get()`中的第二个参数是对路由请求的处理，它一般包含`req`、`res`参数，但除了这两个参数还包含第三个参数`next`，只有在包含`next`的前提下，才会从一个中间件跳转到另一个中间件。
+
+正是有了`next(error)`，才会从这个`app.get("/api/notes/:id",(req,res, next)=>{...}`跳转到`app.use(errorHandle)`上。
+
+现在考虑增加一条对删除 note 的处理，删除对应 RESTful 里的`delete`操作，需要具体的指出应当删除那一条 note ，也就是需要获取到`note`的`id`值，这里依然用`params`来获取：
+
+```js
+app.delete(`/api/note/:id`, (req, res, next) => {
+  Note.findByIdAndRemove(req.params.id)
+    .then((result) => {
+      res.status(204).end();
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+```
+
+对数据库的操作使用的是`Note.findByIdAndRemove`方法，这里同样在发生`error`时把`error`传递给处理`error`的中间件。
+
+由于这里新增了一个功能，前端同时也要做出修改：
+
+```js
+// http.js
+
+const deleteNote = (id) => {
+  return axios.delete(`${notesApi}/${id}`).then((res) => res.data);
+};
+
+export const http = {
+  getAllNotes,
+  postNotes,
+  updateNote,
+  deleteNote,
+};
+```
+
+```jsx
+// App.js
+const removeNote = (id) => {
+  http.deleteNote(id).then((res) => {
+    setNotes([...notes.filter((note) => note.id !== id)]);
+  });
+};
+
+<ul>
+  {notesToShow.map((note) => (
+    <Note
+      content={note.content}
+      onUpdateClick={() => taggleNoteImportant(note.id)}
+      onDeleteClick={() => removeNote(note.id)}
+      key={note.id}
+    />
+  ))}
+</ul>;
+```
+
+```js
+// Note.js
+
+export const Note = ({ content, onUpdateClick, onDeleteClick }) => {
+  return (
+    <div>
+      <li>
+        {content}
+        <button onClick={onUpdateClick}>chang important</button>
+        <button onClick={onDeleteClick}>delete note</button>
+      </li>
+    </div>
+  );
+};
+```
