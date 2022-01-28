@@ -1023,3 +1023,89 @@ export const Note = ({ content, onUpdateClick, onDeleteClick }) => {
   );
 };
 ```
+
+## 测试
+
+测试使用的是`jest`模块，需要进行安装使用：
+
+```shell
+npm install --save-jest jest
+```
+
+在`package.json`文件中指定`jest`的测试环境：
+
+```text
+  "jest": {
+    "testEnvironment": "node"
+  }
+```
+
+或者新建`jest.config.js`文件指定测试环境：
+
+```js
+module.exports = {
+  testEnvironment: "node",
+};
+```
+
+然后配置启动项：
+
+```text
+"scripts": {
+    ......
+    "test": "jest --verbose"
+  },
+```
+
+在`utils`文件夹下新建`for_testing.js`文件，该文件内配置用于测试的测试项：
+
+```js
+const palindrome = (string) => {
+  return string.split("").reverse().join("");
+};
+
+const average = (array) => {
+  const reducer = (sum, item) => {
+    return sum + item;
+  };
+
+  return array.reduce(reducer, 0) / array.length;
+};
+
+module.exports = {
+  palindrome,
+  average,
+};
+```
+
+然后再新建`test`文件夹，这个文件夹内的文件用于测试`for_testing.js`内的测试项，
+
+新建`palindrome.test.js`，这个文件内用于测试`for_testing.js`内有关是否为回文字符串的测试：
+
+```js
+const palindrome = require("../utils/for_testing").palindrome;
+
+test("palindrome of a", () => {
+  const result = palindrome("a");
+
+  expect(result).toBe("a");
+});
+
+test("palindrome of react", () => {
+  const result = palindrome("react");
+
+  expect(result).toBe("tcaer");
+});
+
+test("palindrome of releveler", () => {
+  const result = palindrome("releveler");
+
+  expect(result).toBe("releveler");
+});
+
+test("palindrome of abcd", () => {
+  const result = palindrome("abcd");
+
+  expect(result).toBe("abcd");
+});
+```
