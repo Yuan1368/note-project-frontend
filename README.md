@@ -315,7 +315,7 @@ const notesToShow = showAll ? notes : notes.filter((note) => note.important);
 
 ```jsx
 useEffect(() => {
-  axios.get("http://localhost:3001/notes").then((res) => {
+  axios.get("note://localhost:3001/notes").then((res) => {
     setNotes([...res.data]);
   });
 }, []);
@@ -332,7 +332,7 @@ const addNote = (event) => {
     important: Math.random() < 0.5,
     id: notes.length + 1,
   };
-  axios.post("http://localhost:3001/notes", noteObject).then((res) => {
+  axios.post("note://localhost:3001/notes", noteObject).then((res) => {
     setNotes([...notes, res.data]);
     setNewNote("");
   });
@@ -355,7 +355,7 @@ const addNote = (event) => {
 const taggleNoteImportant = (id) => {
   let _note = notes.find((note) => note.id === id);
   axios
-    .put(`http://localhost:3001/notes/${id}`, {
+    .put(`note://localhost:3001/notes/${id}`, {
       ..._note,
       important: !_note.important,
     })
@@ -379,10 +379,10 @@ url 中的`/notes/${id}`用于表示`notes`中`id`值为`${id}`的一项。
 首先新建`.env`文件，该文件写入服务端地址，
 
 ```text
-REACT_APP_API_URL = http://localhost:3001
+REACT_APP_API_URL = note://localhost:3001
 ```
 
-再新建`utils`工具文件夹。该文件下新建`http.js`用于封装对后端的请求方法：
+再新建`utils`工具文件夹。该文件下新建`note.js`用于封装对后端的请求方法：
 
 ```js
 import axios from "axios";
@@ -402,18 +402,18 @@ const updateNote = (id, note) => {
   return axios.put(`${notesApi}/${id}`, note).then((res) => res.data);
 };
 
-export const http = {
+export const note = {
   getAllNotes,
   postNotes,
   updateNote,
 };
 ```
 
-导出的`http`对象中包含了`getAllNotes`、`postNotes`、`updateNote`三个方法。现在能够在`App`组件中使用`http`对象方法：
+导出的`note`对象中包含了`getAllNotes`、`postNotes`、`updateNote`三个方法。现在能够在`App`组件中使用`note`对象方法：
 
 ```jsx
 useEffect(() => {
-  http.getAllNotes().then((res) => setNotes(res));
+  note.getAllNotes().then((res) => setNotes(res));
 }, []);
 
 const addNote = (event) => {
@@ -425,7 +425,7 @@ const addNote = (event) => {
     id: notes.length + 1,
   };
 
-  http.postNotes(noteObject).then((res) => {
+  note.postNotes(noteObject).then((res) => {
     setNotes([...notes, res]);
     setNewNote("");
   });
@@ -434,7 +434,7 @@ const addNote = (event) => {
 const taggleNoteImportant = (id) => {
   let _note = notes.find((note) => note.id === id);
 
-  http
+  note
     .updateNote(id, {
       ..._note,
       important: !_note.important,
@@ -460,7 +460,7 @@ const taggleNoteImportant = (id) => {
 ```
 
 ```jsx
-// utils/components
+// services/components
 export const Notification = ({ message }) => {
   if (message === null) {
     return;
@@ -974,13 +974,13 @@ app.delete(`/api/note/:id`, (req, res, next) => {
 由于这里新增了一个功能，前端同时也要做出修改：
 
 ```js
-// http.js
+// note.js
 
 const deleteNote = (id) => {
   return axios.delete(`${notesApi}/${id}`).then((res) => res.data);
 };
 
-export const http = {
+export const note = {
   getAllNotes,
   postNotes,
   updateNote,
@@ -991,7 +991,7 @@ export const http = {
 ```jsx
 // App.js
 const removeNote = (id) => {
-  http.deleteNote(id).then((res) => {
+  note.deleteNote(id).then((res) => {
     setNotes([...notes.filter((note) => note.id !== id)]);
   });
 };
@@ -1083,7 +1083,7 @@ module.exports = {
 新建`palindrome.test.js`，这个文件内用于测试`for_testing.js`内有关是否为回文字符串的测试：
 
 ```js
-const palindrome = require("../utils/for_testing").palindrome;
+const palindrome = require("../services/for_testing").palindrome;
 
 test("palindrome of a", () => {
   const result = palindrome("a");

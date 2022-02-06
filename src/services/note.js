@@ -1,7 +1,5 @@
 import axios from "axios";
-
-const baseUrl = process.env.REACT_APP_URL_API;
-const notesApi = baseUrl + "/notes";
+import { notesApi } from "../utils/url";
 
 const getAllNotes = () => {
   return axios.get(notesApi).then((res) => res.data);
@@ -19,7 +17,7 @@ const deleteNote = (id) => {
   return axios.delete(`${notesApi}/${id}`).then((res) => res.data);
 };
 
-export const http = {
+export default {
   getAllNotes,
   postNotes,
   updateNote,
