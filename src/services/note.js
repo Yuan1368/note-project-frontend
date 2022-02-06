@@ -1,12 +1,23 @@
 import axios from "axios";
 import { notesApi } from "../utils/url";
 
+let token = null;
+
+const setToken = (newToken) => {
+  token = `bearer ${newToken}`;
+};
+
 const getAllNotes = () => {
   return axios.get(notesApi).then((res) => res.data);
 };
 
-const postNotes = (note) => {
-  return axios.post(notesApi, note).then((res) => res.data);
+const postNotes = async (note) => {
+  const config = {
+    headers: { Authorization: token },
+  };
+
+  const response = await axios.post(notesApi, note, config);
+  return response.data;
 };
 
 const updateNote = (id, note) => {
@@ -22,4 +33,5 @@ export default {
   postNotes,
   updateNote,
   deleteNote,
+  setToken,
 };
