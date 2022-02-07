@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import noteServices from "./services/note";
 import loginServices from "./services/login";
 import { Notification } from "./components/notification";
+import LoginForm from "./components/loginForm";
 
 function App() {
   const [notes, setNotes] = useState([]);
@@ -13,6 +14,7 @@ function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [user, setUser] = useState(null);
+  const [loginVisible, setLoginVisible] = useState(false);
 
   useEffect(() => {
     noteServices.getAllNotes().then((res) => setNotes(res));
@@ -99,35 +101,27 @@ function App() {
     }
   };
 
-  const loginForm = () => (
-    <form>
+  const loginForm = () => {
+    const hiddenVisible = { display: loginVisible ? "none" : "" };
+    const showVisible = { display: loginVisible ? "" : "none" };
+    return (
       <div>
-        username
-        <input
-          type={"text"}
-          value={username}
-          name="Username"
-          onChange={({ target }) => {
-            setUsername(target.value);
-          }}
-        />
+        <div style={hiddenVisible}>
+          <button onClick={() => setLoginVisible(true)}>log in</button>
+        </div>
+        <div style={showVisible}>
+          <LoginForm
+            username={username}
+            password={password}
+            handleUsernameChange={(event) => setUsername(event.target.value)}
+            handlePasswordChange={(event) => setPassword(event.target.value)}
+            handleSubmit={handleLogin}
+          />
+          <button onClick={() => setLoginVisible(false)}>cancel</button>
+        </div>
       </div>
-      <div>
-        password
-        <input
-          type={"password"}
-          value={password}
-          name={"Password"}
-          onChange={({ target }) => {
-            setPassword(target.value);
-          }}
-        />
-      </div>
-      <button type={"submit"} onClick={(event) => handleLogin(event)}>
-        login
-      </button>
-    </form>
-  );
+    );
+  };
 
   const noteForm = () => (
     <form>
@@ -147,7 +141,7 @@ function App() {
       ) : (
         <div>
           <p>{user.name} logined-in</p>
-          noteForm()
+          {noteForm()}
         </div>
       )}
       <ul>
