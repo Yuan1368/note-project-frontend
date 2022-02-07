@@ -1,4 +1,4 @@
-export const Note = ({ content, onUpdateClick, onDeleteClick }) => {
+const Note = ({ content, onUpdateClick, onDeleteClick }) => {
   return (
     <div>
       <li>
@@ -9,3 +9,5 @@ export const Note = ({ content, onUpdateClick, onDeleteClick }) => {
     </div>
   );
 };
+
+export default Note;
