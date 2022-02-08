@@ -4,7 +4,7 @@ const NoteForm = ({ onSubmit, handleChange, value }) => {
       <h2>Create a new note</h2>
 
       <form>
-        <input value={value} onChange={handleChange} />
+        <input type="text" value={value} onChange={handleChange} />
         <button type="submit" onClick={onSubmit}>
           save
         </button>
