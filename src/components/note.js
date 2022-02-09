@@ -3,7 +3,7 @@ const Note = ({ content, onUpdateClick, onDeleteClick }) => {
     <div>
       <li className={"note"}>
         {content}
-        <button onClick={onUpdateClick}>chang important</button>
+        <button onClick={onUpdateClick}>change important</button>
         <button onClick={onDeleteClick}>delete note</button>
       </li>
     </div>
