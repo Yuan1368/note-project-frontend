@@ -3,13 +3,18 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
+import { store } from "./store/counter";
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App notes />
-  </React.StrictMode>,
-  document.getElementById("root")
-);
+const renderApp = () =>
+  ReactDOM.render(
+    <React.StrictMode>
+      <App notes />
+    </React.StrictMode>,
+    document.getElementById("root")
+  );
+
+renderApp();
+store.subscribe(renderApp);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

@@ -7,6 +7,7 @@ import Notification from "./components/notification";
 import LoginForm from "./components/loginForm";
 import Togglable from "./components/togglable";
 import NoteForm from "./components/noteForm";
+import Counter from "./components/counter";
 
 function App() {
   const [notes, setNotes] = useState([]);
@@ -149,6 +150,8 @@ function App() {
       <button type={"button"} onClick={setShowAll.bind(this, !showAll)}>
         {showAll ? "show important" : "show all"}
       </button>
+
+      <Counter />
     </div>
   );
 }
